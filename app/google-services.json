@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "497217608166",
+    "firebase_url": "https://firestorenotetaking.firebaseio.com",
+    "project_id": "firestorenotetaking",
+    "storage_bucket": "firestorenotetaking.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:497217608166:android:8152d71521d716fa9e9e27",
+        "android_client_info": {
+          "package_name": "com.example.firestorenotetaking"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "497217608166-uid44vref7jabrn8l65hq3a1in2hh5jm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2eX54_7yFY_ycdBs4-kOdW2BFCSnFurE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "497217608166-uid44vref7jabrn8l65hq3a1in2hh5jm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
