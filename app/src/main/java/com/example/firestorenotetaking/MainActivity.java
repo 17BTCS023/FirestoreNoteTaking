@@ -1,42 +1,21 @@
 package com.example.firestorenotetaking;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnFailureListener;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.firestore.SetOptions;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = "MainActivity";
-    private static final String KEY_TITLE = "title";
-    private static final String KEY_DESCRIPTION = "description";
-    private static final String KEY_PRIORITY = "priority";
 
     private EditText editTextTitle, editTextDescription, editTextPriority;
     private TextView textViewdata;
@@ -56,33 +35,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        // check the changes in the database, when the activity starts
-        // why event ? because a change in the database is an event
-        notebookRef.addSnapshotListener(this, new EventListener<QuerySnapshot>() {
-            @Override
-            public void onEvent(@Nullable QuerySnapshot queryDocumentSnapshots, @Nullable FirebaseFirestoreException e) {
-                if (e != null) {
-                    return;
-                }
-                String data = "";
-                for (QueryDocumentSnapshot queryDocumentSnapshot : queryDocumentSnapshots) {
-                    Note note = queryDocumentSnapshot.toObject(Note.class);
-                    note.setDocumentId(queryDocumentSnapshot.getId());
-                    String documentId = note.getDocumentId();
-                    String title = note.getTitle();
-                    String description = note.getDescription();
-                    int priority = note.getPriority();
-
-                    data += "ID: " + documentId + "\npriority: " + priority + "\ntitle: " + title + "\ndescription: " + description + "\n\n";
-                }
-                textViewdata.setText(data);
-            }
-        });
-    }
-
 
     public void addNote(View view) {
         String title = editTextTitle.getText().toString().trim();
@@ -97,34 +49,34 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void loadNotes(View view) {
-        Task task1 = notebookRef.whereGreaterThan("priority", 2)
-                .orderBy("priority")
-                .get();
-        Task task2 = notebookRef.whereLessThan("priority", 2)
-                .orderBy("priority")
-                .get();
+        notebookRef.document("gW2IgopSdLk0uIX65XAr")
+                .get()
+                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                    @Override
+                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+                        notebookRef.orderBy("priority")
+                                .startAfter(documentSnapshot)
+                                .get()
+                                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                                    @Override
+                                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                                        String data = "";
+                                        for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
+                                            Note note = documentSnapshot.toObject(Note.class);
+                                            note.setDocumentId(documentSnapshot.getId());
+                                            String title = note.getTitle();
+                                            String description = note.getDescription();
+                                            String documentId = note.getDocumentId();
+                                            int priority = note.getPriority();
 
-        Task<List<QuerySnapshot>> allTasks = Tasks.whenAllSuccess(task1, task2);
-
-        allTasks.addOnSuccessListener(new OnSuccessListener<List<QuerySnapshot>>() {
-            @Override
-            public void onSuccess(List<QuerySnapshot> querySnapshots) {
-                String data = "";
-                for(QuerySnapshot querySnapshot : querySnapshots) {
-                    for (QueryDocumentSnapshot queryDocumentSnapshot : querySnapshot) {
-                        Note note = queryDocumentSnapshot.toObject(Note.class);
-                        note.setDocumentId(queryDocumentSnapshot.getId());
-                        String documentId =  note.getDocumentId();
-                        String title = note.getTitle();
-                        String description = note.getDescription();
-                        int priority = note.getPriority();
-
-                        data += "ID: " + documentId + "\ntitle: " + title + "\npriority: " + priority + "\n\n" ;
+                                            data += "ID : " + documentId + "\nTitle : " + title + "\nDecsiption : "
+                                                    + description + "\nPriorty : " + priority + "\n\n";
+                                        }
+                                        textViewdata.setText(data);
+                                    }
+                                });
                     }
-                }
-                textViewdata.setText(data);
-            }
-        });
+                });
 
     }
 
