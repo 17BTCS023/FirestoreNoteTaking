@@ -1,16 +1,21 @@
 package com.example.firestorenotetaking;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -25,6 +30,40 @@ public class MainActivity extends AppCompatActivity {
     private CollectionReference notebookRef = dbInstance.collection("Notebook");
 
     DocumentSnapshot lastResult;
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        notebookRef.addSnapshotListener(this, new EventListener<QuerySnapshot>() {
+            @Override
+            public void onEvent(@Nullable QuerySnapshot queryDocumentSnapshots, @Nullable FirebaseFirestoreException e) {
+            if(e!= null){
+                Log.d("CHECK", e.toString());
+            }
+            for(DocumentChange dc : queryDocumentSnapshots.getDocumentChanges()){
+                DocumentSnapshot documentSnapshot = dc.getDocument();
+                String id = documentSnapshot.getId();
+                int oldIndex = dc.getOldIndex();
+                int newIndex = dc.getNewIndex();
+
+                switch (dc.getType()){
+                    case ADDED:
+                        textViewdata.append("Added: document id :" + id +
+                                "\nOld Index" + oldIndex + "\t New Index: " + newIndex + "\n" );
+                        break;
+                    case MODIFIED:
+                        textViewdata.append("Modified: document id :" + id +
+                                "\nOld Index" + oldIndex + "\t New Index: " + newIndex +"\n");
+                        break;
+                    case REMOVED:
+                        textViewdata.append("Removed: document id :" + id +
+                                "\nOld Index" + oldIndex + "\t New Index: " + newIndex+ "\n");
+                        break;
+                }
+            }
+            }
+        });
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
