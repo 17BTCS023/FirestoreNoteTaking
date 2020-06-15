@@ -6,12 +6,15 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -19,6 +22,7 @@ import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.WriteBatch;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -32,40 +36,6 @@ public class MainActivity extends AppCompatActivity {
     DocumentSnapshot lastResult;
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        notebookRef.addSnapshotListener(this, new EventListener<QuerySnapshot>() {
-            @Override
-            public void onEvent(@Nullable QuerySnapshot queryDocumentSnapshots, @Nullable FirebaseFirestoreException e) {
-            if(e!= null){
-                Log.d("CHECK", e.toString());
-            }
-            for(DocumentChange dc : queryDocumentSnapshots.getDocumentChanges()){
-                DocumentSnapshot documentSnapshot = dc.getDocument();
-                String id = documentSnapshot.getId();
-                int oldIndex = dc.getOldIndex();
-                int newIndex = dc.getNewIndex();
-
-                switch (dc.getType()){
-                    case ADDED:
-                        textViewdata.append("Added: document id :" + id +
-                                "\nOld Index" + oldIndex + "\t New Index: " + newIndex + "\n" );
-                        break;
-                    case MODIFIED:
-                        textViewdata.append("Modified: document id :" + id +
-                                "\nOld Index" + oldIndex + "\t New Index: " + newIndex +"\n");
-                        break;
-                    case REMOVED:
-                        textViewdata.append("Removed: document id :" + id +
-                                "\nOld Index" + oldIndex + "\t New Index: " + newIndex+ "\n");
-                        break;
-                }
-            }
-            }
-        });
-    }
-
-    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -75,8 +45,37 @@ public class MainActivity extends AppCompatActivity {
         editTextPriority = findViewById(R.id.edit_text_priority);
         textViewdata = findViewById(R.id.text_view_data);
 
+        executeBatchedWrite();
+
     }
 
+    // ALL OR NOTHING APPROACH
+
+    private void executeBatchedWrite() {
+        WriteBatch batch = dbInstance.batch();
+        DocumentReference doc1 = notebookRef.document("New note");
+        batch.set(doc1, new Note("New Note", "New Note", 1));
+
+        DocumentReference doc2 = notebookRef.document("Cn0fRCYDIVIaQjfIW7CH");
+        batch.update(doc2,"title ", "Update Note");
+
+        DocumentReference doc3 = notebookRef.document("ULnFZX53svSZh4SaAwH7");
+        batch.delete(doc3);
+
+        // adding a new document: in batch we dont have the option of .add()
+        // but we can do the following
+        DocumentReference doc4 = notebookRef.document();
+        batch.set(doc4, new Note("Title", "Hello there", 5));
+
+        batch.commit().addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+            textViewdata.setText(e.toString());
+            }
+        });
+
+        
+    }
 
 
     public void addNote(View view) {
@@ -127,28 +126,4 @@ public class MainActivity extends AppCompatActivity {
                });
     }
 
-//   public void deleteDescription(View view) {
-//        /* Way 1
-//     ************************************************
-//        Map<String, Object > note = new HashMap<>();
-//        note.put(KEY_DESCRIPTION, FieldValue.delete());
-//        noteRef.update(note);   */
-//
-//        noteRef.update(KEY_DESCRIPTION, FieldValue.delete());
-//
-//    }
-//
-//    public void updateNote(View view) {
-//        String description = editTextDescription.getText().toString().trim();
-//        Map<String, Object> map = new HashMap<>();
-//        map.put(KEY_DESCRIPTION, description);
-//
-//        //noteRef.set(map, SetOptions.merge());
-//        noteRef.update(map);
-//        //noteRef.update(KEY_TITLE, "i was just checking");
-//    }
-//
-//    public void deleteNote(View view) {
-//        noteRef.delete();
-//    }
 }
